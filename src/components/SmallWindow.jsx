@@ -1,8 +1,7 @@
 function SmallWindow({ data, setSmallWindow }) {
-  console.log(data);
   document.body.style.overflow = "hidden";
   return (
-    <div className="w-full h-full bg-[rgba(6,6,6,0.7)] fixed z-4 flex top-0 left-0 ">
+    <div className="w-full h-full bg-[rgba(6,6,6,0.7)] fixed z-70 flex top-0 left-0 ">
       {data.type === "video" ? (
         <div className="h-[90%] m-auto rounded-xl bg-black shadow text-[17px]">
           <div className="flex justify-between pl-6 pr-6 pt-6 pb-3">
@@ -77,5 +76,3 @@ function SmallWindow({ data, setSmallWindow }) {
 }
 
 export default SmallWindow;
-
-//

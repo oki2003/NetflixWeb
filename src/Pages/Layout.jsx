@@ -1,5 +1,4 @@
-import Header from "../components/partials/Header";
-import Footer from "../components/partials/Footer";
+import Header from "../components/Header";
 import { Outlet } from "react-router-dom";
 
 function Layout() {
@@ -7,7 +6,6 @@ function Layout() {
     <>
       <Header />
       <Outlet />
-      {/* <Footer /> */}
     </>
   );
 }

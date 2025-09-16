@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
-import MediaItem from "../components/Media/MediaItem";
+import Media from "../components/Media";
 import apiService from "../config/api";
+import Hero from "../components/Hero";
+import LoadingMedia from "../components/LoadingMedia";
 
 function MediaPage({ type }) {
   const title = {
@@ -18,6 +20,33 @@ function MediaPage({ type }) {
   let [data, setData] = useState([]);
   let [genres, setGenres] = useState([]);
   let [filterGenres, setFilterGenres] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const handleFilter = (id) => {
+    filterGenres.includes(id)
+      ? setFilterGenres(filterGenres.filter((genreId) => genreId !== id))
+      : setFilterGenres([...filterGenres, id]);
+  };
+
+  const fetchData = async () => {
+    try {
+      const [resGenresList, resMediaList] = await Promise.all([
+        apiService.getGenresList(type),
+        apiService.getMediaList(
+          location.pathname === "/" ? "/movie/popular" : location.pathname
+        ),
+      ]);
+
+      const mediaList = resMediaList.results;
+      const genresList = resGenresList.genres;
+
+      setData(mediaList);
+      setGenres(genresList);
+      setLoading(false);
+    } catch (error) {
+      console.error("Error fetching data", error);
+    }
+  };
 
   useEffect(() => {
     fetchData();
@@ -27,65 +56,59 @@ function MediaPage({ type }) {
     setFilterGenres([]);
   }, [type]);
 
-  const handleFilter = (id) => {
-    filterGenres.includes(id)
-      ? setFilterGenres(filterGenres.filter((genreId) => genreId !== id))
-      : setFilterGenres([...filterGenres, id]);
-  };
-
-  const fetchData = async () => {
-    const arrGenres = await apiService.getGenresList(type);
-    const arrData = await apiService.getMediaList(
-      location.pathname === "/" ? "/movie/popular" : location.pathname
-    );
-    setData(arrData);
-    setGenres(arrGenres);
-  };
-
   return (
     <>
-      <div id="content">
-        <h1 className="pt-9 pb-9 font-semibold text-[30px] text-black">
-          {title[`${type}${location.pathname.split("/")[2]}`]}
-        </h1>
-      </div>
-      <div id="content" className="flex">
-        <div className="w-70 h-fit flex-none text-black border border-[#e3e3e3] rounded-xl shadow-lg">
-          <p className="pl-5 pt-5 pb-5">FILTER GENRES</p>
-          <div className="border border-[#eeeeee] border-solid"></div>
-          <div className="pl-5 pt-5 pb-5">
-            {genres?.map((genre) => (
-              <button
-                key={genre.id}
-                className={`border border-[#9e9e9e] rounded-3xl pt-[8px] pb-[8px] pl-[12px] pr-[12px] mr-3 mb-3 cursor-pointer hover:bg-[#01b4e4] hover:text-[white] ${
-                  filterGenres.includes(genre.id)
-                    ? "bg-[#01b4e4] text-[white]"
-                    : ""
-                }`}
-                onClick={() => handleFilter(genre.id)}
-              >
-                {genre.name}
-              </button>
-            ))}
+      {loading ? (
+        <LoadingMedia />
+      ) : (
+        <div>
+          <Hero item={data?.[0]} type={type} />
+          <div className="py-8 px-6">
+            <div className="container mx-auto">
+              <h3 className="text-xl font-semibold text-[#f7f9fb] mb-4">
+                Filter by Genre
+              </h3>
+              {genres?.map((genre) => (
+                <button
+                  key={genre.id}
+                  className={`mr-4 mb-4 cursor-pointer border border-[#2e3440] px-3 py-2 rounded-md font-medium transition-colors text-sm ${
+                    filterGenres.includes(genre.id)
+                      ? "bg-[#ef4343] hover:bg-[#ef4343]/60"
+                      : "bg-[#0e1014] hover:bg-[#f7c530] hover:text-[#0e1014]"
+                  }`}
+                  onClick={() => handleFilter(genre.id)}
+                >
+                  {genre.name}
+                </button>
+              ))}
+            </div>
           </div>
-          <div className="border border-[#eeeeee] border-solid"></div>
-        </div>
-        <div className="flex flex-wrap justify-between">
-          {data?.map((item) => {
-            if (filterGenres.length == 0) {
-              return <MediaItem key={item.id} item={item} type={type} />;
-            } else {
-              for (let i = 0; i < filterGenres; i++) {
-                if (item.genre_ids.includes(filterGenres[i])) {
-                  if (i == filterGenres.length - 1) {
-                    return <MediaItem key={item.id} item={item} type={type} />;
+          <section className="py-16 px-6">
+            <div className="container mx-auto">
+              <h2 className="text-3xl font-bold text-[#f7f9fb] mb-8">
+                {title[`${type}${location.pathname.split("/")[2]}`]}
+              </h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                {data?.map((item) => {
+                  if (filterGenres.length == 0) {
+                    return <Media key={item.id} item={item} type={type} />;
+                  } else {
+                    for (let i = 0; i < filterGenres; i++) {
+                      if (item.genre_ids.includes(filterGenres[i])) {
+                        if (i == filterGenres.length - 1) {
+                          return (
+                            <Media key={item.id} item={item} type={type} />
+                          );
+                        }
+                      }
+                    }
                   }
-                }
-              }
-            }
-          })}
+                })}
+              </div>
+            </div>
+          </section>
         </div>
-      </div>
+      )}
     </>
   );
 }

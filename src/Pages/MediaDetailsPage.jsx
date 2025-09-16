@@ -1,184 +1,228 @@
 import { useLocation, useParams } from "react-router-dom";
-import { useEffect, useRef, useState } from "react";
-import SmallWindow from "../components/Detail/SmallWindow";
-import CircleProgress from "../components/CircleProgress";
+import { useEffect, useState } from "react";
+import SmallWindow from "../components/SmallWindow";
 import apiService from "../config/api";
+import { Link } from "react-router-dom";
+import LoadingMedia from "../components/LoadingMedia";
 
 function MediaDetailsPage() {
   const [data, setData] = useState({});
   const [arrReviewing, setArrReviewing] = useState([]);
   const [arrVideo, setArrVideo] = useState([]);
-  const [showBtnMore, setShowBtnMore] = useState(false);
   const [smallWindow, setSmallWindow] = useState({ data: {}, show: false });
-  const reviewRef = useRef(null);
+  const [loading, setLoading] = useState(true);
   const { id } = useParams();
   const type = useLocation().pathname.split("/")[2];
-
-  const getDate = (isoString) => {
-    const date = new Date(isoString);
-    const formattedDate = date.toLocaleString("en-US", {
-      day: "2-digit",
-      month: "long",
-      year: "numeric",
-      timeZone: "Asia/Ho_Chi_Minh",
-    });
-
-    return formattedDate;
-  };
 
   useEffect(() => {
     fetchData();
   }, []);
 
   const fetchData = async () => {
-    const arrData = await apiService.getMediaDetails(type, id);
-    const arrDataReviewing = await apiService.getReviewsList(type, id);
-    const arrDataVideo = await apiService.getVideosList(type, id);
-    setData(arrData);
-    setArrReviewing(arrDataReviewing);
-    setArrVideo(arrDataVideo);
-  };
+    try {
+      const [resMediaDetails, resReviewing, resVideoList] = await Promise.all([
+        apiService.getMediaDetails(type, id),
+        apiService.getReviewsList(type, id),
+        apiService.getVideosList(type, id),
+      ]);
 
-  useEffect(() => {
-    if (reviewRef.current?.scrollHeight > reviewRef.current?.clientHeight) {
-      setShowBtnMore(true);
+      setData(resMediaDetails);
+      setArrReviewing(resReviewing.results);
+      setArrVideo(resVideoList.results);
+      setLoading(false);
+    } catch (error) {
+      console.error("Error fetching data", error);
     }
-  }, [reviewRef.current?.scrollHeight]);
+  };
 
   return (
     <>
-      <div
-        className={`text-black bg-right filter h-[600px] bg-contain bg-no-repeat bg-[url('https://media.themoviedb.org/t/p/w1920_and_h800_multi_faces${data?.backdrop_path}')]`}
-      >
-        <div id="content" className="flex items-center h-full z-1 relative">
-          <img
-            src={`https://image.tmdb.org/t/p/w500${data?.poster_path}`}
-            className="w-[330px] h-[487px] rounded-xl"
-            alt="Can't not load this image"
-          />
-          <div className="text-white ml-[40px]">
-            <h1 className="font-bold text-[44px]">
-              {data?.original_title || data?.name}
-              <span className="font-medium text-[#c4bfbf]">{` (${
-                data?.release_date?.split("-")[0] ||
-                data?.first_air_date?.split("-")[0]
-              })`}</span>
-            </h1>
-            <div className="flex items-center mb-[27px]">
-              <span>
-                {`${
-                  data?.release_date?.split("-")[2] ||
-                  data?.first_air_date?.split("-")[2]
-                }/${
-                  data?.release_date?.split("-")[1] ||
-                  data?.first_air_date?.split("-")[1]
-                }/${
-                  data?.release_date?.split("-")[0] ||
-                  data?.first_air_date?.split("-")[0]
-                }`}
-              </span>
-              <span className="bg-white block w-[6px] h-[6px] rounded-[100%] m-2"></span>
-              <span>{data?.genres?.map((genre) => genre.name).join(", ")}</span>
-              <span className="bg-white block w-[6px] h-[6px] rounded-[100%] m-2"></span>
-              <span>1h 50m</span>
-            </div>
-            <div className="mb-[35px]">
-              <div className="flex items-center">
-                <CircleProgress
-                  size={60}
-                  progress={Math.round(data?.vote_average * 10)}
-                  strokeWidth={5}
-                />
-                <span className="w-1 ml-[12px] font-bold">User Score</span>
-              </div>
-              <button className="bg-[#053257] rounded-4xl pt-[14px] pb-[14px] pl-[21px] pr-[21px] cursor-pointer hover:bg-[#032541] mt-5">
-                Play Trailer
-              </button>
-            </div>
-            <p className="text-[#c4bfbf] font-semibold text-[17px]">
-              {data?.tagline}
-            </p>
-            <p className="font-semibold text-[22px] leading-[47px]">Overview</p>
-            <p className="text-[17px]">{data?.overview}</p>
-            <div></div>
-          </div>
-        </div>
-        <div id="content">
-          <h1 className="font-semibold mt-9 text-[30px]">Review</h1>
-          <div className="border border-solid border-[#e3e3e3] rounded-xl shadow p-[21px] text-[17px]">
-            {arrReviewing.length !== 0 ? (
-              <div className="flex">
+      {loading ? (
+        <LoadingMedia />
+      ) : (
+        <div>
+          <section className="relative pt-20">
+            <div
+              className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+              style={{
+                backgroundImage: `url(${`https://image.tmdb.org/t/p/w1920${data?.backdrop_path}`})`,
+              }}
+            />
+            <div
+              className="absolute inset-0"
+              style={{
+                background:
+                  "linear-gradient(135deg, rgba(14,16,20,0.9), rgba(238,67,67,0.3))",
+              }}
+            />
+
+            <div className="relative z-10 container mx-auto px-6 py-16">
+              <Link
+                to="/"
+                className="inline-flex items-center gap-2 text-[#f7f9fb] hover:opacity-80 transition-colors mb-8"
+              >
+                <img src="/icons/arrow-left.svg" className="w-5 h-5" />
+                Back to Movies
+              </Link>
+
+              <div className="flex flex-col lg:flex-row gap-8 items-start">
                 <img
-                  src={
-                    arrReviewing[0]?.author_details?.avatar_path
-                      ? `https://image.tmdb.org/t/p/w500${arrReviewing[0]?.author_details?.avatar_path}`
-                      : "https://sbcf.fr/wp-content/uploads/2018/03/sbcf-default-avatar.png"
-                  }
-                  className="mb-3 w-[46px] h-[46px] rounded-full mr-[21px]"
-                  alt="Can't not load this image"
+                  src={`https://image.tmdb.org/t/p/w500${data?.poster_path}`}
+                  alt={data.title}
+                  className="w-80 h-auto rounded-lg"
+                  style={{ boxShadow: "0 25px 50px -12px rgba(14,16,20,0.8)" }}
                 />
-                <div>
-                  <h2 className="font-bold text-[20px]">{`A review by ${arrReviewing[0]?.author}`}</h2>
-                  <span className="p-[2px] pl-[12px] pr-[12px] rounded-[6px] bg-[#032541] text-white mr-[10px]">{`${
-                    arrReviewing[0]?.author_details?.rating * 10
-                  }%`}</span>
-                  <span className="text-[#646464]">
-                    Written by{" "}
-                    <span className="text-black">
-                      {arrReviewing[0]?.author_details?.name}
-                    </span>{" "}
-                    {`on ${getDate(arrReviewing[0]?.created_at)}`}
-                  </span>
+
+                <div className="flex-1 space-y-6">
+                  <div>
+                    <h1 className="text-4xl lg:text-6xl font-black text-[#f7f9fb] mb-4">
+                      {type === "tv" ? data?.name : data?.title}
+                    </h1>
+                    <p className="text-lg text-[#94a3b7] italic mb-4">
+                      {data?.tagline}
+                    </p>
+
+                    <div className="flex flex-wrap items-center gap-4 mb-6">
+                      <div className="flex items-center gap-2">
+                        <img src="/icons/star.svg" className="w-5 h-5" />
+                        <span className="text-[#f7c530] font-semibold text-xl">
+                          {data?.vote_average?.toFixed(1)}
+                        </span>
+                        <span className="text-[#94a3b7]">
+                          ({data?.vote_count} votes)
+                        </span>
+                      </div>
+                      <div className="w-1 h-6 bg-[#20242b]" />
+                      <div className="flex items-center gap-2 text-[#94a3b7]">
+                        <img
+                          src="/icons/calendar.svg"
+                          className="w-4 h-4"
+                          alt="Calendar Icon"
+                        />
+                        {type === "tv"
+                          ? new Date(data?.first_air_date).getFullYear()
+                          : new Date(data?.release_date).getFullYear()}
+                      </div>
+                      {data?.runtime && (
+                        <>
+                          <div className="w-1 h-6 bg-[#20242b]" />
+                          <div className="flex items-center gap-2 text-[#94a3b7]">
+                            <img
+                              src="/icons/clock.svg"
+                              className="w-4 h-4 mr-2"
+                              alt="Play Icon"
+                            />
+                            {data?.runtime} min
+                          </div>
+                        </>
+                      )}
+                    </div>
+
+                    <div className="flex flex-wrap gap-2 mb-6">
+                      {data?.genres?.map((genre) => (
+                        <div
+                          key={genre.id}
+                          className="border-transparent px-2 py-1 rounded-lg bg-[#20242b] text-[#f7f9fb] border-none"
+                        >
+                          {genre.name}
+                        </div>
+                      ))}
+                    </div>
+
+                    <p className="text-lg text-[#94a3b7] leading-relaxed mb-8">
+                      {data?.overview}
+                    </p>
+
+                    <div className="flex flex-wrap gap-4">
+                      <a
+                        href="#trailer"
+                        className="flex items-center bg-[#ee4343] hover:bg-[#ee4343]/90 text-[#f7f9fb] border-none px-8 py-2 cursor-pointer text-lg font-semibold rounded-xl"
+                        style={{ boxShadow: "0 0 30px rgba(238,67,67,0.3)" }}
+                      >
+                        <img
+                          src="/icons/play.svg"
+                          className="w-4 h-4 mr-2"
+                          alt="Play Icon"
+                        />
+                        Watch Trailer
+                      </a>
+                    </div>
+                  </div>
                 </div>
               </div>
-            ) : (
-              <span>There is 0 review</span>
-            )}
-            <p className="line-clamp-6" ref={reviewRef}>
-              {arrReviewing[0]?.content}
-            </p>
-            <span
-              className={
-                showBtnMore
-                  ? "underline font-semibold cursor-pointer hover:text-[#646464]"
-                  : "hidden"
-              }
-            >
-              see the rest
-            </span>
-          </div>
-          {arrReviewing.length != 0 ? (
-            <p className="pt-[30px] pb-[37px]  text-[17px] ">
-              <span
-                onClick={() =>
-                  setSmallWindow({
-                    show: true,
-                    data: arrReviewing,
-                    type: "review",
-                    getDate: (isoString) => getDate(isoString),
-                  })
-                }
-                className="font-semibold cursor-pointer hover:text-[#646464]"
-              >
-                Read All Reviews
-              </span>
-            </p>
-          ) : (
-            <span></span>
-          )}
-        </div>
-        <div id="content" className="pb-10">
-          <h1 className="font-semibold mt-9 text-[30px]">Media</h1>
-          <div
-            className="flex border border-solid border-[#e3e3e3] rounded-xl shadow text-[17px] overflow-x-scroll"
-            id="scrollbarStyle"
-          >
-            {arrVideo.map((video) => {
-              if (video.site === "YouTube") {
-                return (
+            </div>
+          </section>
+
+          {/* Reviews Section */}
+          <section className="py-16 px-6">
+            <div className="container mx-auto">
+              <h2 className="text-3xl font-bold text-[#f7f9fb] mb-8">
+                Reviews & Ratings
+              </h2>
+
+              <div className="grid gap-6">
+                {arrReviewing.map((review) => (
                   <div
-                    key={video.id}
-                    className="play flex-none cursor-pointer"
+                    key={review.id}
+                    className="rounded-lg border bg-[#15181d] text-[#f7f9fb] shadow-sm border-[#20242b]"
+                  >
+                    <div className="flex flex-col space-y-1.5 p-6">
+                      <div className="flex items-start gap-4">
+                        <div className="relative flex shrink-0 overflow-hidden rounded-full w-12 h-12">
+                          <img
+                            className="aspect-square h-full w-full"
+                            src={
+                              review.author_details.avatar_path
+                                ? `https://image.tmdb.org/t/p/w200${review.author_details.avatar_path}`
+                                : "/images/avatar.png"
+                            }
+                          />
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-2">
+                            <h3 className="text-2xl font-semibold leading-none tracking-tight text-[#f7f9fb]">
+                              {review.author}
+                            </h3>
+                            {review.author_details.rating && (
+                              <div className="rounded-full border font-medium flex items-center px-2.5 py-0.5 text-xs transition-colors border-transparent bg-[#f7c530] text-[#0e1014]">
+                                <img
+                                  src="/icons/black-star.svg"
+                                  className="w-3 h-3 mr-2"
+                                />
+                                {review.author_details.rating}/10
+                              </div>
+                            )}
+                          </div>
+                          <p className="text-sm text-[#94a3b7]">
+                            {new Date(review.created_at).toLocaleDateString(
+                              "vi-VN"
+                            )}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="p-6 pt-0">
+                      <p className="text-[#94a3b7] leading-relaxed whitespace-pre-line">
+                        {review.content}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          {/* Videos Section */}
+          <section id="trailer" className="py-16 px-6 bg-[#15181d]">
+            <div className="container mx-auto">
+              <h2 className="text-3xl font-bold text-[#f7f9fb] mb-8">
+                Trailers & Videos
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {arrVideo.map((video, index) => (
+                  <div
+                    key={index}
+                    className="rounded-lg border text-[#f7f9fb] shadow-sm bg-[#20242b] border-[#94a3b7] overflow-hidden group cursor-pointer hover:border-[#ee4343] transition-all"
                     onClick={() =>
                       setSmallWindow({
                         data: {
@@ -190,21 +234,33 @@ function MediaDetailsPage() {
                       })
                     }
                   >
-                    <img
-                      className="h-[292px]"
-                      src={`https://img.youtube.com/vi/${video.key}/hqdefault.jpg`}
-                    />
+                    <div
+                      className="aspect-video bg-[#0e1014] flex items-center justify-center relative bg-cover bg-center bg-no-repeat"
+                      style={{
+                        backgroundImage: `url(https://img.youtube.com/vi/${video.key}/hqdefault.jpg)`,
+                      }}
+                    >
+                      <img
+                        src="/icons/play.svg"
+                        className="w-12 h-12 text-[#ee4343] group-hover:scale-110 transition-transform"
+                      />
+                      <div className="absolute inset-0 bg-[#0e1014]/50 group-hover:bg-[#0e1014]/30 transition-colors" />
+                    </div>
+                    <div className="p-4">
+                      <h3 className="font-semibold text-[#f7f9fb] mb-1">
+                        {video.name}
+                      </h3>
+                      <p className="text-sm text-[#94a3b7]">{video.type}</p>
+                    </div>
                   </div>
-                );
-              }
-            })}
-          </div>
+                ))}
+              </div>
+            </div>
+          </section>
+          {smallWindow.show && (
+            <SmallWindow data={smallWindow} setSmallWindow={setSmallWindow} />
+          )}
         </div>
-      </div>
-      {smallWindow.show ? (
-        <SmallWindow data={smallWindow} setSmallWindow={setSmallWindow} />
-      ) : (
-        <span></span>
       )}
     </>
   );

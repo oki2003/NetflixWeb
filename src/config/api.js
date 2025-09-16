@@ -1,58 +1,49 @@
-const API_KEY = import.meta.env.VITE_API_KEY;
-
 const apiService = {
   getMediaList: (pathname) =>
-    fetch(`https://api.themoviedb.org/3${pathname}?api_key=${API_KEY}`)
+    fetch(`/api/MediaList?pathname=${pathname}`)
       .then((response) => response.json())
-      .then((data) => data.results)
       .catch((error) => console.error("Error:", error)),
 
   getMediaDetails: (type, id) =>
-    fetch(`https://api.themoviedb.org/3/${type}/${id}?api_key=${API_KEY}`)
+    fetch(`/api/MediaDetails?type=${type}&id=${id}`)
       .then((response) => response.json())
       .then((data) => data)
       .catch((error) => console.error("Error:", error)),
 
   getReviewsList: (type, id) =>
-    fetch(
-      `https://api.themoviedb.org/3/${type}/${id}/reviews?api_key=${API_KEY}`
-    )
+    fetch(`/api/ReviewList?type=${type}&id=${id}`)
       .then((response) => response.json())
-      .then((data) => data.results)
+      .then((data) => data)
       .catch((error) => console.error("Error:", error)),
 
   getVideosList: (type, id) =>
-    fetch(
-      `https://api.themoviedb.org/3/${type}/${id}/videos?api_key=${API_KEY}`
-    )
+    fetch(`/api/VideoList?type=${type}&id=${id}`)
       .then((response) => response.json())
-      .then((data) => data.results)
+      .then((data) => data)
       .catch((error) => console.error("Error:", error)),
 
   getGenresList: (type) =>
-    fetch(`https://api.themoviedb.org/3/genre/${type}/list?api_key=${API_KEY}`)
+    fetch(`/api/GenresList?type=${type}`)
       .then((response) => response.json())
-      .then((data) => data.genres)
+      .then((data) => data)
       .catch((error) => console.error("Error:", error)),
 
   getCastsList: () =>
-    fetch(`https://api.themoviedb.org/3/person/popular?api_key=${API_KEY}`)
+    fetch(`/api/CastList`)
       .then((response) => response.json())
-      .then((data) => data.results)
+      .then((data) => data)
       .catch((error) => console.error("Error:", error)),
 
   getCastDetails: (id) =>
-    fetch(`https://api.themoviedb.org/3/person/${id}?api_key=${API_KEY}`)
+    fetch(`/api/CastDetails?id=${id}`)
       .then((response) => response.json())
       .then((data) => data)
       .catch((error) => console.error("Error:", error)),
 
   getKnownMedia: (id) =>
-    fetch(
-      `https://api.themoviedb.org/3/person/${id}/combined_credits?api_key=${API_KEY}`
-    )
+    fetch(`/api/KnownMedia?id=${id}`)
       .then((response) => response.json())
-      .then((data) => data.cast)
+      .then((data) => data)
       .catch((error) => console.error("Error:", error)),
 };
 
